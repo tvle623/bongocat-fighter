@@ -405,6 +405,7 @@
 	}
 	
 	function getStickDirectionViaAxis() {
+		var gamepads = window.navigator.getGamepads();
 		var value = gamepads[gamepadIdx].axes[axisIndex].toFixed(4);
 		for (var i = 0; i < axisDistanceMap.length - 1; ++i) {
 			if (axisDistanceMap[i] <= value && value <= axisDistanceMap[i + 1]) {
