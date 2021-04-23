@@ -107,6 +107,28 @@
 	const STICK_UP_RIGHT = 6;
 	const STICK_DOWN_LEFT = 7;
 	const STICK_DOWN_RIGHT = 8;
+	
+	const AXIS_INDEX_TO_DIRECTION = [
+		STICK_UP,
+		STICK_UP_RIGHT,
+		STICK_RIGHT,
+		STICK_DOWN_RIGHT,
+		STICK_DOWN,
+		STICK_DOWN_LEFT,
+		STICK_LEFT,
+		STICK_UP_LEFT,
+	];
+	
+	let axisDistanceMap = [
+		-1,
+		-0.75,
+		-0.5,
+		-0.25,
+		0.25,
+		0.5,
+		0.75,
+		1
+	];
 
 	//Right/Left/Up/Down are from bongocat's viewpoint!
 	var rpu = document.getElementById("RightPawUp");
@@ -163,7 +185,7 @@
 	var rightButtonIdx = 15;
 	var buttonIdx = [2, 3, 5, 0, 1, 7];
 	var smokeButtonIdx = 4;
-
+	let axisIndex = null;
 	var axeActiveThreshold = 0.4;
 
 	//Right hand for the buttons
@@ -221,6 +243,7 @@
 		var buttonsMatch = config.match(/[?&]buttons=([\d,]+)/);
 		var deadzoneMatch = config.match(/[?&]deadzone=([\d\.]+)/);
 		var ap2sMatch = config.match(/[?&]ap2s=([\d]+)/);
+		var axisForStickMatch = config.match(/[?&]axisForStick=([\d]+)/);
 		if(gamepadMatch) {
 			gamepadIdx = Number.parseInt(gamepadMatch[1]);
 		}
@@ -242,6 +265,9 @@
 		}
 		if(ap2sMatch) {
 			AP2SThreshold = Number.parseInt(ap2sMatch[1]);
+		}
+		if(axisForStickMatch) {
+			axisIndex = Number.parseInt(axisForStickMatch[1]);
 		}
 	}
 
@@ -377,8 +403,24 @@
 			currentLPCurve[i] = currentLPCurve[i] + (currentLPCurveTarget[i] - currentLPCurve[i]) * LPSpeed;
 		}
 	}
+	
+	function getStickDirectionViaAxis() {
+		var value = gamepads[gamepadIdx].axes[axisIndex].toFixed(4);
+		for (var i = 0; i < axisDistanceMap.length - 1; ++i) {
+			if (axisDistanceMap[i] <= value && value <= axisDistanceMap[i + 1]) {
+				var midPoint = (axisDistanceMap[i] + axisDistanceMap[i + 1]) / 2
+				return value < midPoint ? AXIS_INDEX_TO_DIRECTION[i] : AXIS_INDEX_TO_DIRECTION[i + 1]; 
+			}
+		}
+
+		return STICK_NEUTRAL;
+	}
 
 	function getStickDirection() {
+		if (axisIndex !== null) {
+			return getStickDirectionViaAxis();
+		}
+		
 		var upPressed = buttons[upButtonIdx].pressed;
 		var downPressed = buttons[downButtonIdx].pressed;
 		var leftPressed = buttons[leftButtonIdx].pressed;
